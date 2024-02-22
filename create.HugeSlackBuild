@@ -71,7 +71,7 @@ EOF
 
 
 # echo mkdir for dirs in . to HugeSlackBuild
-for dir in $(find . -type d) ; do
+for dir in $(find . -type d | grep -v "^.$" ) ; do
   echo $dir
   echo "mkdir -vp $dir" >> $OUT_DIR/$OUT_FILE
 done
@@ -96,7 +96,24 @@ done
 # echo run SlackBuild
 echo "bash $SLACKBUILDNAME.SlackBuild" >> ${OUT_DIR}/${OUT_FILE}
 
-tar -czvf ${OUT_DIR}/${OUT_FILE}.tar.gz ${OUT_DIR}/${OUT_FILE}
+# cd out dir to compres only file and no dirs
+cd ${OUT_DIR} || exit 1
+
+# add md5 to the name
+MD5=$(md5sum ${OUT_FILE} | cut -d" " -f1)
+
+# add md5 to name
+mv ${OUT_FILE} ${OUT_FILE}.$MD5
+
+#tar -czvf ${OUT_DIR}/${OUT_FILE}.tar.gz ${OUT_DIR}/${OUT_FILE}
+tar --zstd -cf ${OUT_FILE}.tar.gz ${OUT_FILE}.$MD5
+
+# add md5 to compresed file name
+MD5_ZSTD=$(md5sum ${OUT_FILE}.tar.gz | cut -d" " -f1)
+
+# 
+mv ${OUT_FILE}.tar.gz ${OUT_FILE}.${MD5_ZSTD}.tar.gz 
+
 
 else
   DIR_NOW=$(pwd)
