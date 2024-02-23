@@ -45,6 +45,11 @@ if [ "$(ls *.SlackBuild | wc -l)" == "1" ] ; then
 SLACKBUILDNAME=$(ls *.SlackBuild | head -1 | sed 's/.SlackBuild//')
 OUT_FILE=${SLACKBUILDNAME}.HugeSlackBuild
 
+# check if it is a patch
+if pwd | grep "/patches/" ; then 
+  OUT_FILE=${SLACKBUILDNAME}.patch.HugeSlackBuild
+fi
+
 # echo bash first line to HugeSlackBuild
 echo "#!/bin/bash" > $OUT_DIR/$OUT_FILE
 
@@ -71,7 +76,6 @@ cat <<EOF >> $OUT_DIR/$OUT_FILE
 #  ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 EOF
 
-
 # echo mkdir for dirs in . to HugeSlackBuild
 for dir in $(find . -type d | grep -v "^.$" ) ; do
 [[ "$VERBOSE" -eq "2" ]] && \
@@ -95,6 +99,16 @@ for file in $(find . -type f ) ; do
 
   fi
 done
+
+# add REQUIRES to HugeSlackBuild
+# get dep from mi slackdep db
+#cat /var/cache/slackdep/glibc.dep.lst | tr "\n" " "
+# check dep
+# for i in $(cat /var/cache/slackdep/bash.dep.lst) ; do ls /var/log/packages/$i-[0-9]* ; done
+# REQUIRES=
+REQUIRES=$(cat /var/cache/slackdep/$SLACKBUILDNAME.dep.lst | tr "\n" " ")
+echo "REQUIRES=\"${REQUIRES}\"" >> ${OUT_DIR}/${OUT_FILE}
+echo "echo \"REQUIRES: ${REQUIRES}\"" >> ${OUT_DIR}/${OUT_FILE}
 
 # add run SlackBuild auto 
 echo "bash $SLACKBUILDNAME.SlackBuild" >> ${OUT_DIR}/${OUT_FILE}
@@ -121,6 +135,8 @@ tar --zstd -cf ${OUT_FILE}.tar.zst ${OUT_FILE}.$MD5
 # 
 #mv ${OUT_FILE}.tar.zst ${OUT_FILE}.${MD5_ZSTD}.tar.zst
 
+# remove uncompress package
+rm ${OUT_FILE}.$MD5
 
 else
   DIR_NOW=$(pwd)
