@@ -27,7 +27,7 @@ TMP_DIR=/tmp/HugeSlackBuilds
 LOG_FILE=/tmp/HugeSlackBuilds.log
 # clean log file for each run
 echo > $LOG_FILE
-#OUT_DIR=.
+# Output dir where we create the HugeSlackBuild
 OUT_DIR=${OUT_DIR:-$TMP_DIR}
 #OUT_FILE=HugeSlackBuild
 REPO_SLACKWARE_SOURCE=/opt/slackware-repositories/x86/slackware/slackware64-15.0
@@ -48,7 +48,8 @@ MD5=
 #SLACKBUILDNAME=$(ls *.SlackBuild | head -1 | cut -d. -f1)
 SLACKBUILDNAME=$(ls *.SlackBuild | head -1 | sed 's/.SlackBuild//')
 
-# make output file
+# get half output file name, complete output file name are ${SLACKBUILDNAME}.${VERSION}.$MD5.HugeSlackBuild
+# late when all file echoed we can get md5 and get all output file name.
 OUT_FILE=${SLACKBUILDNAME}.${VERSION}
 # check if it is a patch
 if pwd | grep "/patches/" ; then 
@@ -58,9 +59,22 @@ fi
 # echo first line to HugeSlackBuild
 echo "#!/bin/bash" > $OUT_DIR/$OUT_FILE
 
+# echo to get current work dir for HugeSlackBuild
+echo "# Get current work dir" >> $OUT_DIR/$OUT_FILE
+echo "cd $(dirname $0) && CWD=$(pwd)" >> $OUT_DIR/$OUT_FILE
+
 # make chroot env
-# echo "mkdir -vp chroot_folder" >> $OUT_DIR/$OUT_FILE
-# echo "cd chroot_folder || exit 1" >> $OUT_DIR/$OUT_FILE
+# echo "# Make chroot env" >> $OUT_DIR/$OUT_FILE
+# echo "mkdir -vp ${CWD}/chroot_folder" >> $OUT_DIR/$OUT_FILE
+# echo "mkdir -vp ${CWD}/{proc,sys,dev}/" || exit 2 >> $OUT_DIR/$OUT_FILE
+# echo "mount -t proc /proc ${CWD}/proc || exit 2" >> $OUT_DIR/$OUT_FILE
+# echo "mount -o bind /sys ${CWD}/sys || exit 2" >> $OUT_DIR/$OUT_FILE
+# echo "mount -o bind /dev ${CWM}/dev || exit 2" >> $OUT_DIR/$OUT_FILE
+#
+# echo "chroot ${CWD}/chroot_folder /bin/bash" >> $OUT_DIR/$OUT_FILE
+#
+# echo "umount chroot_folder/{proc,sys,dev}/ || exit 2" >> $OUT_DIR/$OUT_FILE
+#
 
 # cat LICENCE to HugeSlackBuild
 cat <<EOF >> $OUT_DIR/$OUT_FILE
@@ -86,6 +100,7 @@ cat <<EOF >> $OUT_DIR/$OUT_FILE
 EOF
 
 # echo dirs to HugeSlackBuild
+echo "# Make source dirs" >> $OUT_DIR/$OUT_FILE
 for dir in $(find . -type d | grep -v "^.$" ) ; do
 [[ "$VERBOSE" -eq "2" ]] && \
   echo "Found dir: $dir"
@@ -93,6 +108,7 @@ for dir in $(find . -type d | grep -v "^.$" ) ; do
 done
 
 # cat files to HugeSlackBuild
+echo "# Cat base64 source files" >> $OUT_DIR/$OUT_FILE
 for file in $(find . -type f ) ; do
   if [ "$file" == "./create.HugeSlackBuild" -o "$file" == "./$OUT_FILE" -o "$file" == "./${OUT_FILE}.tar.gz" ] ; then
     echo "Excluding $file"
@@ -104,12 +120,14 @@ for file in $(find . -type f ) ; do
     cat $file | base64 >> $OUT_DIR/$OUT_FILE
     echo "EOF" >> $OUT_DIR/$OUT_FILE
     #echo md5sum to HugeSlackbuild
+    echo "# Check MD5 file or exit" >> $OUT_DIR/$OUT_FILE
     echo "echo \"$(md5sum $file)\" | md5sum -c || exit 1" >> $OUT_DIR/$OUT_FILE
 
   fi
 done
 
 
+echo "# Epoch date for reproduciblebuilds" >> $OUT_DIR/$OUT_FILE
 # add SOURCE_DATE_EPOCH
 # https://reproducible-builds.org/docs/source-date-epoch/
 #BUILD_DATE="$(date --utc --date="@${SOURCE_DATE_EPOCH:-$(date +%s)}" +%Y-%m-%d)"
@@ -118,9 +136,10 @@ done
 # for BSD
 #BUILD_DATE=$(date -u -d "@$SOURCE_DATE_EPOCH" "$DATE_FMT" 2>/dev/null || date -u -r "$SOURCE_DATE_EPOCH" "$DATE_FMT" 2>/dev/null || date -u "$DATE_FMT")
 SOURCE_DATE_EPOCH="${SOURCE_DATE_EPOCH:-$(date +%s)}"
-echo "SOURCE_DATE_EPOCH=$SOURCE_DATE_EPOCH)" >> ${OUT_DIR}/${OUT_FILE}
+echo "SOURCE_DATE_EPOCH=$SOURCE_DATE_EPOCH" >> ${OUT_DIR}/${OUT_FILE}
 
 # add run SlackBuild auto 
+echo "# Start SlackBuild" >> $OUT_DIR/$OUT_FILE
 echo "bash $SLACKBUILDNAME.SlackBuild" >> ${OUT_DIR}/${OUT_FILE}
 
 # add REQUIRES to HugeSlackBuild
@@ -129,6 +148,7 @@ echo "bash $SLACKBUILDNAME.SlackBuild" >> ${OUT_DIR}/${OUT_FILE}
 # check dep
 # for i in $(cat /var/cache/slackdep/bash.dep.lst) ; do ls /var/log/packages/$i-[0-9]* ; done
 # REQUIRES=
+echo "# echo REQUIRES" >> $OUT_DIR/$OUT_FILE
 if [ -e /var/cache/slackdep/$SLACKBUILDNAME.dep.lst ] ; then
   REQUIRES=$(cat /var/cache/slackdep/$SLACKBUILDNAME.dep.lst | tr "\n" " ")
   echo "REQUIRES=\"${REQUIRES}\"" >> ${OUT_DIR}/${OUT_FILE}
