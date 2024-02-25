@@ -105,6 +105,10 @@ for file in $(find . -type f ) ; do
   fi
 done
 
+# add SOURCE_DATE_EPOCH
+SOURCE_DATE_EPOCH=$(date +%s)
+echo "SOURCE_DATE_EPOCH=$SOURCE_DATE_EPOCH)" >> ${OUT_DIR}/${OUT_FILE}
+
 # add run SlackBuild auto 
 echo "bash $SLACKBUILDNAME.SlackBuild" >> ${OUT_DIR}/${OUT_FILE}
 

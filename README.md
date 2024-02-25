@@ -16,7 +16,7 @@ Make a repository for some HugeSlackBuilds on github, due to file limitations no
 
 Ask the comunity for contributions, help, and feedback.
 
-Later play with custom environments and repetitivebuilds.
+Later play with custom environments and reproduciblebuilds.
 
 Maybe think about adding some warnings for required or automate of these.
 
@@ -27,7 +27,7 @@ Maybe make the HugeSlackBuild less huge, deleting the base64 blocks but adding f
 
 
 
-## Run create.HugeSlackBuilds
+## Runing create.HugeSlackBuilds
 
 I run it on /tmp mounted on tmpfs. So no disk I/O wear.
 
