@@ -19,26 +19,29 @@
 #  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 #  ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-cd $(dirname $0) && CWD=$(pwd)
+#cd $(dirname $0) && CWD=$(pwd)
 # make temp dir
 TMP_DIR=/tmp/HugeSlackBuilds
 [[ ! -d $TMP_DIR ]] && mkdir -vp $TMP_DIR
 # make log file
 LOG_FILE=/tmp/HugeSlackBuilds.log
 # clean log file for each run
-echo > $LOG_FILE
+# changed to run on each dir so dont delete log file when run delete on make world
+#echo > $LOG_FILE
 # Output dir where we create the HugeSlackBuild
 OUT_DIR=${OUT_DIR:-$TMP_DIR}
 #OUT_FILE=HugeSlackBuild
-REPO_SLACKWARE_SOURCE=/opt/slackware-repositories/x86/slackware/slackware64-15.0
-REPO_SLACKBUILDS_SOURCE=/opt/slackware-repositories/slackbuilds/15.0
+# distribution Version for name
+DIST_VERSION=${DIST_VERSION:-15}
+#echo $DIST_VERSION
+
 # default verbose
 VERBOSE="${VERBOSE:-0}"
+[[ "$VERBOSE" -eq "0" ]] && \
+  echo -n "[+] Processing " && pwd
 
-# function that make HugeSlackBuild files
-make_huge(){
 # Sanity check
-#pwd
+echo -n "Run on " && pwd
 # if more than one SlackBuild dont run and log it to make manual attention 
 if [ "$(ls *.SlackBuild | wc -l)" == "1" ] ; then 
 # Clean MD5
@@ -48,12 +51,31 @@ MD5=
 #SLACKBUILDNAME=$(ls *.SlackBuild | head -1 | cut -d. -f1)
 SLACKBUILDNAME=$(ls *.SlackBuild | head -1 | sed 's/.SlackBuild//')
 
+# some packages fail and build xd
+### Set packagename Check if we can get PRINT_PACKAGE_NAME
+##if grep PRINT_PACKAGE_NAME ${SLACKBUILDNAME}.SlackBuild >/dev/null ; then
+##  PACKAGE_NAME=$(PRINT_PACKAGE_NAME=y bash  ${SLACKBUILDNAME}.SlackBuild)
+##else
+##  PACKAGE_NAME=${SLACKBUILDNAME}
+##fi
+##[[ "$VERBOSE" -ge "0" ]] && \
+##echo "Package name: $PACKAGE_NAME"
+
+
 # get half output file name, complete output file name are ${SLACKBUILDNAME}.${VERSION}.$MD5.HugeSlackBuild
 # late when all file echoed we can get md5 and get all output file name.
-OUT_FILE=${SLACKBUILDNAME}.${VERSION}
-# check if it is a patch
-if pwd | grep "/patches/" ; then 
-  OUT_FILE=${SLACKBUILDNAME}.patch.${VERSION}
+if [ -z $VERSION ] ; then 
+  OUT_FILE=${SLACKBUILDNAME}
+  # check if it is a patch
+  if pwd | grep "/patches/" ; then 
+    OUT_FILE=${SLACKBUILDNAME}.patch
+  fi
+else
+  OUT_FILE=${SLACKBUILDNAME}.${VERSION}
+  # check if it is a patch
+  if pwd | grep "/patches/" ; then 
+    OUT_FILE=${SLACKBUILDNAME}.patch.${VERSION}
+  fi
 fi
 
 # echo first line to HugeSlackBuild
@@ -74,6 +96,7 @@ echo "cd $(dirname $0) && CWD=$(pwd)" >> $OUT_DIR/$OUT_FILE
 # echo "mount -t proc /proc ${CWD}/proc || exit 2" >> $OUT_DIR/$OUT_FILE
 # echo "mount -o bind /sys ${CWD}/sys || exit 2" >> $OUT_DIR/$OUT_FILE
 # echo "mount -o bind /dev ${CWM}/dev || exit 2" >> $OUT_DIR/$OUT_FILE
+# echo "installpkg --root ${CWD}/chroot-folder REQUIRED_FOR_BUILD.t?z || exit 2" >> $OUT_DIR/$OUT_FILE
 #
 # echo "chroot ${CWD}/chroot_folder /bin/bash" >> $OUT_DIR/$OUT_FILE
 #
@@ -114,7 +137,7 @@ done
 # cat files to HugeSlackBuild
 echo "# Cat base64 source files" >> $OUT_DIR/$OUT_FILE
 for file in $(find . -type f ) ; do
-  if [ "$file" == "./create.HugeSlackBuild" -o "$file" == "./$OUT_FILE" -o "$file" == "./${OUT_FILE}.tar.gz" ] ; then
+  if [ "$file" == "./create.HugeSlackBuilds" -o "$file" == "./make.HugeSlackBuild" ] ; then
     echo "Excluding $file"
   else
 [[ "$VERBOSE" -eq "2" ]] && \
@@ -174,7 +197,7 @@ mv ${OUT_FILE} ${OUTPUT_FILE}
 #tar -czvf ${OUT_DIR}/${OUT_FILE}.tar.gz ${OUT_DIR}/${OUT_FILE}
 tar --zstd -cf ${OUT_FILE}.HugeSlackBuild.tar.zst ${OUTPUT_FILE}
 [[ "$VERBOSE" -eq "0" ]] && \
-  echo "Output file ${OUTPUT_FILE}.tar.zst"
+  echo "Output file ${OUT_DIR}/${OUT_FILE}.HugeSlackBuild.tar.zst"
 
 # add md5 to compresed file name
 #MD5_ZSTD=$(md5sum ${OUT_FILE}.tar.zst | cut -d" " -f1)
@@ -192,30 +215,5 @@ else
   echo "Error to many SlackBuild in $DIR_NOW" 
   
 fi
-}
 
-## Make HugeSlackBuilds for slackware
-# for i in $(grep ".*\.SlackBuild$" /opt/slackware-repositories/x86/slackware/slackware64-15.0/CHECKSUMS.md5 | cut -d" " -f3-) ; do x=$(echo $i | rev | cut -d/ -f2-  | rev | cut -d" " -f3) ; if [ "$(ls /opt/slackware-repositories/x86/slackware/slackware64-15.0/$x/*.SlackBuild | wc -l)" != "1" ] ; then echo $i ; fi   ; done > /tmp/more.than.2.slackbuild
-
-# find SlackBuild files to make HugeSlackBuilds
-for slackbuild_line in $(grep ".*\.SlackBuild$" ${REPO_SLACKWARE_SOURCE}/CHECKSUMS.md5 | cut -d" " -f3-) ; do
-  #echo "$slackbuild_line"
-  slackbuild_path=$(echo $slackbuild_line | rev | cut -d/ -f2-  | rev | cut -d" " -f3)
-  VERSION=$(echo $REPO_SLACKWARE_SOURCE | rev | cut -d/ -f1 | rev)
-  #echo $VERSION
-[[ "$VERBOSE" -eq "0" ]] && \
-  echo "[+] Processing ${REPO_SLACKWARE_SOURCE}/$slackbuild_path"
-  cd ${REPO_SLACKWARE_SOURCE}/$slackbuild_path || exit 1
-[[ "$VERBOSE" -eq "1" ]] && \
-  echo -n "cd " &&  pwd
-  make_huge
-done
-
-
-## Make HugeSlackBuilds for slackbuilds
-#
-#lrwxrwxrwx 1 root root 44 Jul 28  2023 /var/lib/sbopkg/SBo/15.0 -> /opt/slackware-repositories/slackbuilds/15.0
-# ls -la /var/cache/sbopkg/
-#
-#
 
