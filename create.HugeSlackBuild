@@ -63,6 +63,10 @@ echo "#!/bin/bash" > $OUT_DIR/$OUT_FILE
 echo "# Get current work dir" >> $OUT_DIR/$OUT_FILE
 echo "cd $(dirname $0) && CWD=$(pwd)" >> $OUT_DIR/$OUT_FILE
 
+#Build in tmpfs
+#tmpfs            /tmp             tmpfs       size=20G,nodev,nosuid    0 0
+#mount --mkdir -t tmpfs -o defaults,size=20G tmpfs /mnt/
+
 # make chroot env
 # echo "# Make chroot env" >> $OUT_DIR/$OUT_FILE
 # echo "mkdir -vp ${CWD}/chroot_folder" >> $OUT_DIR/$OUT_FILE
@@ -211,5 +215,7 @@ done
 ## Make HugeSlackBuilds for slackbuilds
 #
 #lrwxrwxrwx 1 root root 44 Jul 28  2023 /var/lib/sbopkg/SBo/15.0 -> /opt/slackware-repositories/slackbuilds/15.0
+# ls -la /var/cache/sbopkg/
+#
 #
 
