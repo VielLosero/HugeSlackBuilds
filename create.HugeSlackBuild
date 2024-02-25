@@ -58,6 +58,10 @@ fi
 # echo first line to HugeSlackBuild
 echo "#!/bin/bash" > $OUT_DIR/$OUT_FILE
 
+# make chroot env
+# echo "mkdir -vp chroot_folder" >> $OUT_DIR/$OUT_FILE
+# echo "cd chroot_folder || exit 1" >> $OUT_DIR/$OUT_FILE
+
 # cat LICENCE to HugeSlackBuild
 cat <<EOF >> $OUT_DIR/$OUT_FILE
 # Copyright 2024 Viel Losero.
@@ -105,8 +109,15 @@ for file in $(find . -type f ) ; do
   fi
 done
 
+
 # add SOURCE_DATE_EPOCH
-SOURCE_DATE_EPOCH=$(date +%s)
+# https://reproducible-builds.org/docs/source-date-epoch/
+#BUILD_DATE="$(date --utc --date="@${SOURCE_DATE_EPOCH:-$(date +%s)}" +%Y-%m-%d)"
+#date format
+#DATE_FMT="+%Y-%m-%d"
+# for BSD
+#BUILD_DATE=$(date -u -d "@$SOURCE_DATE_EPOCH" "$DATE_FMT" 2>/dev/null || date -u -r "$SOURCE_DATE_EPOCH" "$DATE_FMT" 2>/dev/null || date -u "$DATE_FMT")
+SOURCE_DATE_EPOCH="${SOURCE_DATE_EPOCH:-$(date +%s)}"
 echo "SOURCE_DATE_EPOCH=$SOURCE_DATE_EPOCH)" >> ${OUT_DIR}/${OUT_FILE}
 
 # add run SlackBuild auto 
