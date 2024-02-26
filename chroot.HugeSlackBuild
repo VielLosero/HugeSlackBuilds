@@ -1,0 +1,26 @@
+#!/bin/bash
+
+# needed
+which installpkg || exit 1
+
+# make chroot env
+# echo "# Make chroot env" >> $OUT_DIR/$OUT_FILE
+# echo "mkdir -vp ${CWD}/chroot_folder" >> $OUT_DIR/$OUT_FILE
+# echo "mkdir -vp ${CWD}/{proc,sys,dev}/" || exit 2 >> $OUT_DIR/$OUT_FILE
+# echo "mount -t proc /proc ${CWD}/proc || exit 2" >> $OUT_DIR/$OUT_FILE
+# echo "mount -o bind /sys ${CWD}/sys || exit 2" >> $OUT_DIR/$OUT_FILE
+# echo "mount -o bind /dev ${CWM}/dev || exit 2" >> $OUT_DIR/$OUT_FILE
+# echo "installpkg --root ${CWD}/chroot-folder REQUIRED_FOR_BUILD.t?z || exit 2" >> $OUT_DIR/$OUT_FILE
+#
+# echo "chroot ${CWD}/chroot_folder /bin/bash" >> $OUT_DIR/$OUT_FILE
+#
+# echo "umount chroot_folder/{proc,sys,dev}/ || exit 2" >> $OUT_DIR/$OUT_FILE
+#
+# to bash to work
+ a/bash-5.1.016-x86_64-1.txz
+ a/aaa_glibc-solibs-2.33-x86_64-5.txz
+ a/aaa_libraries-15.0-x86_64-19.txz
+ l/glibc-2.33-x86_64-5.txz
+# ls dir etc
+ a/coreutils-9.0-x86_64-3
+
