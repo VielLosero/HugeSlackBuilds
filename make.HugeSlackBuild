@@ -38,10 +38,9 @@ DIST_VERSION=${DIST_VERSION:-15}
 # default verbose
 VERBOSE="${VERBOSE:-0}"
 [[ "$VERBOSE" -eq "0" ]] && \
-  echo -n "[+] Processing " && pwd
+  echo -n "[+] Working on dir: " && pwd
 
 # Sanity check
-echo -n "Run on " && pwd
 # if more than one SlackBuild dont run and log it to make manual attention 
 if [ "$(ls *.SlackBuild | wc -l)" == "1" ] ; then 
 # Clean MD5
@@ -193,12 +192,14 @@ OUTPUT_FILE="${OUT_FILE}.$MD5.HugeSlackBuild"
 mv ${OUT_FILE} ${OUTPUT_FILE}
 [[ "$VERBOSE" -eq "3" ]] && \
   echo "MD5: ${OUTPUT_FILE}"
+[[ "$VERBOSE" -eq "0" ]] && \
+echo "Huge file: ${OUTPUT_FILE}"
 
 # compress HugeSlackBuild file
 #tar -czvf ${OUT_DIR}/${OUT_FILE}.tar.gz ${OUT_DIR}/${OUT_FILE}
 tar --zstd -cf ${OUT_FILE}.HugeSlackBuild.tar.zst ${OUTPUT_FILE}
 [[ "$VERBOSE" -eq "0" ]] && \
-  echo "Output file ${OUT_DIR}/${OUT_FILE}.HugeSlackBuild.tar.zst"
+  echo "Output compressed file: ${OUT_DIR}/${OUT_FILE}.HugeSlackBuild.tar.zst"
 
 # add md5 to compresed file name
 #MD5_ZSTD=$(md5sum ${OUT_FILE}.tar.zst | cut -d" " -f1)
