@@ -20,60 +20,8 @@
 #  ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 # Epoch date for reproduciblebuilds
-SOURCE_DATE_EPOCH=1709664676
+SOURCE_DATE_EPOCH=1709667980
 date -s "@$SOURCE_DATE_EPOCH"
-#cat << EOF > env.HugeSlackBuild
-#SHELL="/bin/bash"
-#WINDOWID="20971525"
-#XDG_CONFIG_DIRS="/etc/xdg:/etc/kde/xdg"
-#TERM_PROGRAM_VERSION="3.2a"
-#TMUX="/tmp/tmux-0/default,5906,0"
-#PKG_CONFIG_PATH="/usr/local/lib64/pkgconfig:/usr/local/share/pkgconfig:/usr/lib64/pkgconfig:/usr/share/pkgconfig"
-#GNOME_KEYRING_CONTROL="/home/v/.cache/keyring-4JT1J2"
-#G_BROKEN_FILENAMES="1"
-#HOSTNAME="arcadia.lo"
-#MINICOM="-c on"
-#JAVA_HOME="/usr/lib64/zulu-openjdk8"
-#SSH_AUTH_SOCK="/root/.ssh/ssh_auth_sock"
-#ANT_HOME="/usr/share/ant"
-#XDG_SEAT="seat0"
-#PWD="/tmp/ncdu"
-#LOGNAME="root"
-#XDG_SESSION_TYPE="tty"
-#MANPATH=":/usr/lib64/zulu-openjdk11/man:/usr/lib64/zulu-openjdk8/man"
-#UNO_PATH="/usr/lib64/libreoffice/program"
-#XAUTHORITY="/root/.xauth6KTxDL"
-#LS_OPTIONS="-F -b -T 0 --color=auto"
-#WINDOWPATH="1"
-#HOME="/root"
-#LANG="en_US.UTF-8"
-#LS_COLORS="no=00:fi=00:di=01;34:ln=01;36:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.bat=01;32:*.btm=01;32:*.cmd=01;32:*.com=01;32:*.dll=01;32:*.exe=01;32:*.7z=01;31:*.ace=01;31:*.arj=01;31:*.bz2=01;31:*.cpio=01;31:*.deb=01;31:*.dz=01;31:*.gz=01;31:*.jar=01;31:*.lha=01;31:*.lz=01;31:*.lzh=01;31:*.lzma=01;31:*.rar=01;31:*.rpm=01;31:*.rz=01;31:*.tar=01;31:*.taz=01;31:*.tb2=01;31:*.tbz2=01;31:*.tbz=01;31:*.tgz=01;31:*.tlz=01;31:*.trz=01;31:*.txz=01;31:*.tz=01;31:*.tz2=01;31:*.tzst=01;31:*.xz=01;31:*.z=01;31:*.zip=01;31:*.zoo=01;31:*.zst=01;31:*.aac=01;35:*.anx=01;35:*.asf=01;35:*.au=01;35:*.axa=01;35:*.axv=01;35:*.avi=01;35:*.bmp=01;35:*.divx=01;35:*.flac=01;35:*.flv=01;35:*.gif=01;35:*.ico=01;35:*.jpg=01;35:*.jpeg=01;35:*.m2a=01;35:*.m2t=01;35:*.m2v=01;35:*.m4a=01;35:*.m4p=01;35:*.m4v=01;35:*.mid=01;35:*.midi=01;35:*.mka=01;35:*.mkv=01;35:*.mov=01;35:*.mp3=01;35:*.mp4=01;35:*.mp4v=01;35:*.mpc=01;35:*.mpeg=01;35:*.mpg=01;35:*.nuv=01;35:*.oga=01;35:*.ogv=01;35:*.ogx=01;35:*.ogg=01;35:*.opus=01;35:*.pbm=01;35:*.pgm=01;35:*.png=01;35:*.ppm=01;35:*.qt=01;35:*.ra=01;35:*.ram=01;35:*.rm=01;35:*.spx=01;35:*.svg=01;35:*.svgz=01;35:*.tga=01;35:*.tif=01;35:*.tiff=01;35:*.vob=01;35:*.wav=01;35:*.webm=01;35:*.webp=01;35:*.wma=01;35:*.wmv=01;35:*.xbm=01;35:*.xcf=01;35:*.xpm=01;35:*.xspf=01;35:*.xwd=01;35:*.xvid=01;35:"
-#XDG_SESSION_CLASS="user"
-#TERM="screen-256color"
-#G_FILENAME_ENCODING="@locale"
-#LESSOPEN="|lesspipe.sh %s"
-#USER="root"
-#T1LIB_CONFIG="/usr/share/t1lib/t1lib.config"
-#TMUX_PANE="%6"
-#GDK_USE_XFT="1"
-#DISPLAY=":0"
-#SHLVL="7"
-#INPUTRC="/etc/inputrc"
-#XDG_VTNR="1"
-#XDG_SESSION_ID="1"
-#URE_BOOTSTRAP="vnd.sun.star.pathname:/usr/lib64/libreoffice/program/fundamentalrc"
-#XDG_RUNTIME_DIR="/run/user/1000"
-#QT5DIR="/usr/lib64/qt5"
-#KDEDIRS="/usr"
-#LC_COLLATE="C"
-#VDPAU_LOG="0"
-#PATH="/usr/local/sbin:/usr/local/bin:/sbin:/usr/sbin:/bin:/usr/bin"
-#LV2_PATH="/usr/lib64/lv2"
-#MAIL="/var/mail/v"
-#OLDPWD="/home/v"
-#TERM_PROGRAM="tmux"
-#_="/bin/printenv"
-#EOF
 # Get current work dir
 cd $(dirname $0) && CWD=$(pwd)
 
@@ -2952,11 +2900,6 @@ source env.HugeSlackBuild
 set +a
 printenv
 
-SOURCE_DATE_EPOCH=1709664676 bash ncdu.SlackBuild
+SOURCE_DATE_EPOCH=1709667980 bash ncdu.SlackBuild
 
 # echo REQUIRES
-PACKAGE_MD5SUM=$(md5sum /tmp/ncdu*.t?z)
-echo "#MD5 $PACKAGE_MD5SUM" >> $0
-#MD5 8772a1e4267a4175dd945cc88954e00e  /tmp/ncdu-1.17-x86_64-1_SBo.tgz -- on slackware 15.0 x86
-#MD5 8772a1e4267a4175dd945cc88954e00e  /tmp/ncdu-1.17-x86_64-1_SBo.tgz -- on live slackware 15.0 x86
-#MD5 8772a1e4267a4175dd945cc88954e00e  /tmp/ncdu-1.17-x86_64-1_SBo.tgz -- on chroot 
