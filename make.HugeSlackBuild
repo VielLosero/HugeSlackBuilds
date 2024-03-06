@@ -46,14 +46,27 @@ if [ "$(ls *.SlackBuild | wc -l)" == "1" ] ; then
 # Clean MD5
 MD5=
 
+# Get source date epoch for reporducible builds
+SOURCE_DATE_EPOCH="${SOURCE_DATE_EPOCH:-$(date +%s)}"
+# set SOURCE_DATE_EPOCH to use with patch
+date -s "@$SOURCE_DATE_EPOCH"
+
 # Changes for reproducible builds
+# I use a patch because is more clean to check sources md5 sums, and dont want to touch SlackBuilds scripts
 # Change gzip -9 to gzip -n -9 
 if grep -n "gzip -9" $(ls *.SlackBuild) ; then 
+  touch $(ls *.SlackBuild).reproduciblebuilds.patch 
   cat  $(ls *.SlackBuild) | sed  '5i # Modified by Viel Losero 2024 for ReproducibleBuilds'  | \
     sed '/gzip -9/i # Add -n option to gzip make reproducible when GZIP_NO_TIMESTAMPS is set' | \
-    sed 's/gzip -9/gzip -n -9/g' | diff -u $(ls *.SlackBuild) - > $(ls *.SlackBuild).reproduciblebuilds.patch
+    sed 's/gzip -9/gzip -n -9/g' | diff -a $(ls *.SlackBuild) - > $(ls *.SlackBuild).reproduciblebuilds.patch
+   # awk '/^(---|\+\+\+)/ { sub("  " $(NF-5) " " $(NF-4) " " $(NF-3) " " $(NF-2) " "$(NF-1) " " $NF, "  Thu Jan 1 00:00:00 1970") }1'
+   # Change timestamp because diff not have SOURCE_DATE_EPOCH and each time the date change the md5 is diferent.
+   #sed -i 's/^+++.*/+++ - 1970-01-01 00:00:00.000000000 +0000/' $(ls *.SlackBuild).reproduciblebuilds.patch
 fi
-# add if some tar compress, no in decompress
+#diff add timestamp each time and dont have SOURCE_DATE_EPOCH
+#
+#
+# add this if some tar compress, no in decompress
 ##  # Source date epoch for reproduciblebuilds for tar man files
 ##  unset MTIME
 ##  if [ -n "${SOURCE_DATE_EPOCH}" ]; then
@@ -126,7 +139,7 @@ echo "# Epoch date for reproduciblebuilds" >> $OUT_DIR/$OUT_FILE
 #DATE_FMT="+%Y-%m-%d"
 # for BSD
 #BUILD_DATE=$(date -u -d "@$SOURCE_DATE_EPOCH" "$DATE_FMT" 2>/dev/null || date -u -r "$SOURCE_DATE_EPOCH" "$DATE_FMT" 2>/dev/null || date -u "$DATE_FMT")
-SOURCE_DATE_EPOCH="${SOURCE_DATE_EPOCH:-$(date +%s)}"
+#SOURCE_DATE_EPOCH="${SOURCE_DATE_EPOCH:-$(date +%s)}"
 echo "SOURCE_DATE_EPOCH=\${SOURCE_DATE_EPOCH:-${SOURCE_DATE_EPOCH}}" >> ${OUT_DIR}/${OUT_FILE}
 echo 'echo "Seting SOURCE_DATE_EPOCH"' >> $OUT_DIR/$OUT_FILE
 echo 'date -s "@$SOURCE_DATE_EPOCH"' >> ${OUT_DIR}/${OUT_FILE}
@@ -214,7 +227,7 @@ echo "# Applying reproduciblebuild patches" >> $OUT_DIR/$OUT_FILE
 cat << 'EOF' >> $OUT_DIR/$OUT_FILE
 if [ -e $(ls *.SlackBuild).reproduciblebuilds.patch ] ; then
   echo "Patching $(ls *.SlackBuild) to be reproducible."
-  patch < $(ls *.SlackBuild).reproduciblebuilds.patch || exit 1
+  patch $(ls *.SlackBuild) < $(ls *.SlackBuild).reproduciblebuilds.patch || exit 1
 fi
 EOF
 echo 'echo ""' >> $OUT_DIR/$OUT_FILE
@@ -230,7 +243,7 @@ echo "SOURCE_DATE_EPOCH=\$SOURCE_DATE_EPOCH bash $SLACKBUILDNAME.SlackBuild" >> 
 echo "" >> $OUT_DIR/$OUT_FILE
 echo "# Unpatch SlackBuild" >> $OUT_DIR/$OUT_FILE
 echo 'echo "Unpatch $(ls *.SlackBuild)."' >> $OUT_DIR/$OUT_FILE
-echo "patch -R < ncdu.SlackBuild.reproduciblebuilds.patch || exit 1" >> $OUT_DIR/$OUT_FILE
+echo "patch $(ls *.SlackBuild) -R < ncdu.SlackBuild.reproduciblebuilds.patch || exit 1" >> $OUT_DIR/$OUT_FILE
 echo 'echo ""' >> $OUT_DIR/$OUT_FILE
 
 # add REQUIRES to HugeSlackBuild
