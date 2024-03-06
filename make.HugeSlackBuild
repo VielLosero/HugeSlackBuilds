@@ -46,6 +46,20 @@ if [ "$(ls *.SlackBuild | wc -l)" == "1" ] ; then
 # Clean MD5
 MD5=
 
+# Changes for reproducible builds
+# Change gzip -9 to gzip -n -9 
+if grep -n "gzip -9" $(ls *.SlackBuild) ; then 
+  cat  $(ls *.SlackBuild) | sed  '5i # Modified by Viel Losero 2024 for ReproducibleBuilds'  | \
+    sed '/gzip -9/i # Add -n option to gzip make reproducible when GZIP_NO_TIMESTAMPS is set' | \
+    sed 's/gzip -9/gzip -n -9/g' | diff -u $(ls *.SlackBuild) - > $(ls *.SlackBuild).reproduciblebuilds.patch
+fi
+# add if some tar compress, no in decompress
+##  # Source date epoch for reproduciblebuilds for tar man files
+##  unset MTIME
+##  if [ -n "${SOURCE_DATE_EPOCH}" ]; then
+##      MTIME="--clamp-mtime --mtime=@${SOURCE_DATE_EPOCH}"
+##  fi
+
 # find SlackBuild name
 #SLACKBUILDNAME=$(ls *.SlackBuild | head -1 | cut -d. -f1)
 SLACKBUILDNAME=$(ls *.SlackBuild | head -1 | sed 's/.SlackBuild//')
@@ -113,8 +127,10 @@ echo "# Epoch date for reproduciblebuilds" >> $OUT_DIR/$OUT_FILE
 # for BSD
 #BUILD_DATE=$(date -u -d "@$SOURCE_DATE_EPOCH" "$DATE_FMT" 2>/dev/null || date -u -r "$SOURCE_DATE_EPOCH" "$DATE_FMT" 2>/dev/null || date -u "$DATE_FMT")
 SOURCE_DATE_EPOCH="${SOURCE_DATE_EPOCH:-$(date +%s)}"
-echo "SOURCE_DATE_EPOCH=$SOURCE_DATE_EPOCH" >> ${OUT_DIR}/${OUT_FILE}
+echo "SOURCE_DATE_EPOCH=\${SOURCE_DATE_EPOCH:-${SOURCE_DATE_EPOCH}}" >> ${OUT_DIR}/${OUT_FILE}
+echo 'echo "Seting SOURCE_DATE_EPOCH"' >> $OUT_DIR/$OUT_FILE
 echo 'date -s "@$SOURCE_DATE_EPOCH"' >> ${OUT_DIR}/${OUT_FILE}
+echo 'echo ""' >> $OUT_DIR/$OUT_FILE
 
 # echo environment
 #echo 'cat << EOF > env.HugeSlackBuild' >> ${OUT_DIR}/${OUT_FILE}
@@ -145,15 +161,18 @@ echo 'cd $(dirname $0) && CWD=$(pwd)' >> $OUT_DIR/$OUT_FILE
 # echo dirs to HugeSlackBuild
 echo "" >> $OUT_DIR/$OUT_FILE
 echo "# Make source dirs" >> $OUT_DIR/$OUT_FILE
+echo 'echo "Creating dirs if needed."' >> $OUT_DIR/$OUT_FILE
 for dir in $(find . -type d | grep -v "^.$" ) ; do
 [[ "$VERBOSE" -eq "2" ]] && \
   echo "Found dir: $dir"
   echo "mkdir -vp $dir" >> $OUT_DIR/$OUT_FILE
 done
+echo 'echo ""' >> $OUT_DIR/$OUT_FILE
 
 # cat files to HugeSlackBuild
 echo "" >> $OUT_DIR/$OUT_FILE
 echo "# Cat base64 source files" >> $OUT_DIR/$OUT_FILE
+echo 'echo "Extracting needed files."' >> $OUT_DIR/$OUT_FILE
 for file in $(find . -type f ) ; do
   #if [ "$file" == "./create.HugeSlackBuilds" -o "$file" == "./make.HugeSlackBuild" ] ; then
   if [ -z $(echo "$file" | grep -v ".HugeSlackBuild" ) ] ; then
@@ -171,20 +190,48 @@ for file in $(find . -type f ) ; do
 
   fi
 done
+echo 'echo ""' >> $OUT_DIR/$OUT_FILE
 
-# config and export env
+# add config and export env if needed on HugeSlackBuilds
 echo "" >> $OUT_DIR/$OUT_FILE
 echo "# Config and export env" >> $OUT_DIR/$OUT_FILE
-#echo "env -i HOME="$HOME" LC_CTYPE="${LC_ALL:-${LC_CTYPE:-$LANG}}" PATH="$PATH" USER="$USER" bash $SLACKBUILDNAME.SlackBuild" >> ${OUT_DIR}/${OUT_FILE}
-echo "set -a" >> $OUT_DIR/$OUT_FILE
-echo "source env.HugeSlackBuild" >> $OUT_DIR/$OUT_FILE
-echo "set +a" >> $OUT_DIR/$OUT_FILE
-#echo 'export $(xargs <env.HugeSlackBuild)'>> $OUT_DIR/$OUT_FILE
+cat << 'EOF' >> $OUT_DIR/$OUT_FILE
+if [ -e env.HugeSlackBuild ] ; then
+  # set -a will export all variables defined now
+  set -a
+  source env.HugeSlackBuild
+  set +a
+fi
+EOF
+# add print environment to HugeSlackBuilds
+echo 'echo "Printing environment."' >> $OUT_DIR/$OUT_FILE
 echo 'printenv'>> $OUT_DIR/$OUT_FILE
+echo 'echo ""' >> $OUT_DIR/$OUT_FILE
+
+# add apply reproduciblebuilds.patches to HugeSlackBuild
+echo "" >> $OUT_DIR/$OUT_FILE
+echo "# Applying reproduciblebuild patches" >> $OUT_DIR/$OUT_FILE
+cat << 'EOF' >> $OUT_DIR/$OUT_FILE
+if [ -e $(ls *.SlackBuild).reproduciblebuilds.patch ] ; then
+  echo "Patching $(ls *.SlackBuild) to be reproducible."
+  patch < $(ls *.SlackBuild).reproduciblebuilds.patch || exit 1
+fi
+EOF
+echo 'echo ""' >> $OUT_DIR/$OUT_FILE
 
 # add run SlackBuild auto
 echo "" >> $OUT_DIR/$OUT_FILE
-echo "SOURCE_DATE_EPOCH=$SOURCE_DATE_EPOCH bash $SLACKBUILDNAME.SlackBuild" >> ${OUT_DIR}/${OUT_FILE}
+echo "# Run slackbuild with SOURCE_DATE_EPOCH" >> $OUT_DIR/$OUT_FILE
+echo 'echo "Runing $(ls *.SlackBuild) patched for reproduciblebuilds with Epoch date: $SOURCE_DATE_EPOCH"' >> $OUT_DIR/$OUT_FILE
+echo "SOURCE_DATE_EPOCH=\$SOURCE_DATE_EPOCH bash $SLACKBUILDNAME.SlackBuild" >> ${OUT_DIR}/${OUT_FILE}
+#echo 'echo ""' >> $OUT_DIR/$OUT_FILE # no needed makepkg leave last line empty
+
+# add remove patch unpatch SlackBuild to HugeSlackBuild
+echo "" >> $OUT_DIR/$OUT_FILE
+echo "# Unpatch SlackBuild" >> $OUT_DIR/$OUT_FILE
+echo 'echo "Unpatch $(ls *.SlackBuild)."' >> $OUT_DIR/$OUT_FILE
+echo "patch -R < ncdu.SlackBuild.reproduciblebuilds.patch || exit 1" >> $OUT_DIR/$OUT_FILE
+echo 'echo ""' >> $OUT_DIR/$OUT_FILE
 
 # add REQUIRES to HugeSlackBuild
 # get dep from mi slackdep db
@@ -193,11 +240,12 @@ echo "SOURCE_DATE_EPOCH=$SOURCE_DATE_EPOCH bash $SLACKBUILDNAME.SlackBuild" >> $
 # for i in $(cat /var/cache/slackdep/bash.dep.lst) ; do ls /var/log/packages/$i-[0-9]* ; done
 # REQUIRES=
 echo "" >> $OUT_DIR/$OUT_FILE
-echo "# echo REQUIRES" >> $OUT_DIR/$OUT_FILE
+echo "# echo REQUIRES if found" >> $OUT_DIR/$OUT_FILE
 if [ -e /var/cache/slackdep/$SLACKBUILDNAME.dep.lst ] ; then
   REQUIRES=$(cat /var/cache/slackdep/$SLACKBUILDNAME.dep.lst | tr "\n" " ")
   echo "REQUIRES=\"${REQUIRES}\"" >> ${OUT_DIR}/${OUT_FILE}
   echo "echo \"REQUIRES: ${REQUIRES}\"" >> ${OUT_DIR}/${OUT_FILE}
+  echo 'echo ""' >> $OUT_DIR/$OUT_FILE
 fi
 
 # add temporal chech md5 to file
@@ -205,10 +253,34 @@ fi
 #echo 'PACKAGE_MD5SUM=$(md5sum /tmp/'${SLACKBUILDNAME}'*.t?z)' >> ${OUT_DIR}/${OUT_FILE}
 #echo 'echo "#MD5 $PACKAGE_MD5SUM" >> $0' >> ${OUT_DIR}/${OUT_FILE}
 
+# add and check md5 of created package to HugeSlackBuild name
+echo "" >> $OUT_DIR/$OUT_FILE
+echo "# Add package MD5SUM to the HugeSlackBuild name" >> $OUT_DIR/$OUT_FILE
+cat << 'EOF' >> ${OUT_DIR}/${OUT_FILE}
+PACKAGE_MD5SUM=$(md5sum /tmp/${SLACKBUILDNAME}*.t?z | cut -d" " -f1)
+if echo $0 | grep $PACKAGE_MD5SUM >/dev/null ; then
+  echo "Reproduciblebuild  md5 will match." 
+  md5sum /tmp/${SLACKBUILDNAME}*.t?z
+  echo $0
+else
+  if [[ "$(echo $0 | awk 'BEGIN { FS = "." } { print NF}')" -ge "4" ]] ; then 
+    echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+    echo "! /tmp/${SLACKBUILDNAME}*.t?z md5 NOT match!!"
+    echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+  else
+    echo "Added md5 to HugeSlackBuild script."
+    SORT_FILE=$(echo $0 | rev | cut -d. -f2- | rev)
+    mv $0 ${SORT_FILE}.${PACKAGE_MD5SUM}.HugeSlackBuild
+    echo ${SORT_FILE}.${PACKAGE_MD5SUM}.HugeSlackBuild
+  fi
+fi
+EOF
+echo 'echo ""' >> $OUT_DIR/$OUT_FILE
+
 # cd to out dir to compres only file and no dirs
 cd ${OUT_DIR} || exit 1
 
-# add md5 to the name
+# add md5 to the HugeSlackbuild name
 MD5=$(md5sum ${OUT_FILE} | cut -d" " -f1)
 OUTPUT_FILE="${OUT_FILE}.$MD5.HugeSlackBuild"
 # move file
@@ -219,10 +291,12 @@ mv ${OUT_FILE} ${OUTPUT_FILE}
 echo "Huge file: ${OUTPUT_FILE}"
 
 # compress HugeSlackBuild file
+echo "" >> $OUT_DIR/$OUT_FILE
 #tar -czvf ${OUT_DIR}/${OUT_FILE}.tar.gz ${OUT_DIR}/${OUT_FILE}
 tar --zstd -cf ${OUT_FILE}.HugeSlackBuild.tar.zst ${OUTPUT_FILE}
 [[ "$VERBOSE" -eq "0" ]] && \
   echo "Output compressed file: ${OUT_DIR}/${OUT_FILE}.HugeSlackBuild.tar.zst"
+echo 'echo ""' >> $OUT_DIR/$OUT_FILE
 
 # add md5 to compresed file name
 #MD5_ZSTD=$(md5sum ${OUT_FILE}.tar.zst | cut -d" " -f1)
