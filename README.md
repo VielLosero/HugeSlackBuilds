@@ -78,6 +78,7 @@ b08f96e3e648ad0713dc2e3a4245c128  ncdu.SlackBuild
 Excluding ./make.HugeSlackBuild
 Huge file: ncdu.694781a44d61ee0e813d719f4598f909.HugeSlackBuild
 Output compressed file: /tmp/HugeSlackBuilds/ncdu.HugeSlackBuild.tar.zst
+```
 Congrats you have created your firts HugeSlackBuild script.
 
 For now I leaved the HugeSlackBuild script output ncdu.694781a44d61ee0e813d719f4598f909.HugeSlackBuild on /tmp/HugeSlackBuilds to can chech it whitout extract it from the compressed file. In late versions i will remove and leave only the compressed file with the HugeSlackBuild script inside.
