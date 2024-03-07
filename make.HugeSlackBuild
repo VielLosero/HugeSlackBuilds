@@ -19,6 +19,8 @@
 #  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 #  ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+VERSION=0.0.1
+
 #cd $(dirname $0) && CWD=$(pwd)
 # make temp dir
 TMP_DIR=/tmp/HugeSlackBuilds
@@ -49,22 +51,19 @@ MD5=
 # Get source date epoch for reporducible builds
 SOURCE_DATE_EPOCH="${SOURCE_DATE_EPOCH:-$(date +%s)}"
 # set SOURCE_DATE_EPOCH to use with patch
-date -s "@$SOURCE_DATE_EPOCH"
+#date -s "@$SOURCE_DATE_EPOCH"
 
 # Changes for reproducible builds
 # I use a patch because is more clean to check sources md5 sums, and dont want to touch SlackBuilds scripts
+# Do not use diff -u because timestamps or use environment to set timezone etc.
 # Change gzip -9 to gzip -n -9 
-if grep -n "gzip -9" $(ls *.SlackBuild) ; then 
-  touch $(ls *.SlackBuild).reproduciblebuilds.patch 
+if grep -n "gzip -9" $(ls *.SlackBuild) >/dev/null ; then 
   cat  $(ls *.SlackBuild) | sed  '5i # Modified by Viel Losero 2024 for ReproducibleBuilds'  | \
     sed '/gzip -9/i # Add -n option to gzip make reproducible when GZIP_NO_TIMESTAMPS is set' | \
     sed 's/gzip -9/gzip -n -9/g' | diff -a $(ls *.SlackBuild) - > $(ls *.SlackBuild).reproduciblebuilds.patch
-   # awk '/^(---|\+\+\+)/ { sub("  " $(NF-5) " " $(NF-4) " " $(NF-3) " " $(NF-2) " "$(NF-1) " " $NF, "  Thu Jan 1 00:00:00 1970") }1'
-   # Change timestamp because diff not have SOURCE_DATE_EPOCH and each time the date change the md5 is diferent.
-   #sed -i 's/^+++.*/+++ - 1970-01-01 00:00:00.000000000 +0000/' $(ls *.SlackBuild).reproduciblebuilds.patch
+    # reset mtime because change 
+    touch --date @${SOURCE_DATE_EPOCH} $(ls *.SlackBuild).reproduciblebuilds.patch
 fi
-#diff add timestamp each time and dont have SOURCE_DATE_EPOCH
-#
 #
 # add this if some tar compress, no in decompress
 ##  # Source date epoch for reproduciblebuilds for tar man files
@@ -175,7 +174,7 @@ echo 'cd $(dirname $0) && CWD=$(pwd)' >> $OUT_DIR/$OUT_FILE
 echo "" >> $OUT_DIR/$OUT_FILE
 echo "# Make source dirs" >> $OUT_DIR/$OUT_FILE
 echo 'echo "Creating dirs if needed."' >> $OUT_DIR/$OUT_FILE
-for dir in $(find . -type d | grep -v "^.$" ) ; do
+for dir in $(find . -type d | grep -v "^.$" | sort ) ; do
 [[ "$VERBOSE" -eq "2" ]] && \
   echo "Found dir: $dir"
   echo "mkdir -vp $dir" >> $OUT_DIR/$OUT_FILE
@@ -183,10 +182,11 @@ done
 echo 'echo ""' >> $OUT_DIR/$OUT_FILE
 
 # cat files to HugeSlackBuild
+# add sort if not file are found randomly
 echo "" >> $OUT_DIR/$OUT_FILE
 echo "# Cat base64 source files" >> $OUT_DIR/$OUT_FILE
 echo 'echo "Extracting needed files."' >> $OUT_DIR/$OUT_FILE
-for file in $(find . -type f ) ; do
+for file in $(find . -type f | sort ) ; do
   #if [ "$file" == "./create.HugeSlackBuilds" -o "$file" == "./make.HugeSlackBuild" ] ; then
   if [ -z $(echo "$file" | grep -v ".HugeSlackBuild" ) ] ; then
     echo "Excluding $file"
@@ -239,11 +239,12 @@ echo 'echo "Runing $(ls *.SlackBuild) patched for reproduciblebuilds with Epoch 
 echo "SOURCE_DATE_EPOCH=\$SOURCE_DATE_EPOCH bash $SLACKBUILDNAME.SlackBuild" >> ${OUT_DIR}/${OUT_FILE}
 #echo 'echo ""' >> $OUT_DIR/$OUT_FILE # no needed makepkg leave last line empty
 
-# add remove patch unpatch SlackBuild to HugeSlackBuild
+# add remove reproduciblebuild.patches to HugeSlackBuild
+# This is to leave the sources untouched, dunno if it is convenient or are best leave the files patchied.
 echo "" >> $OUT_DIR/$OUT_FILE
 echo "# Unpatch SlackBuild" >> $OUT_DIR/$OUT_FILE
 echo 'echo "Unpatch $(ls *.SlackBuild)."' >> $OUT_DIR/$OUT_FILE
-echo "patch $(ls *.SlackBuild) -R < ncdu.SlackBuild.reproduciblebuilds.patch || exit 1" >> $OUT_DIR/$OUT_FILE
+echo "patch -R $(ls *.SlackBuild) < ncdu.SlackBuild.reproduciblebuilds.patch || exit 1" >> $OUT_DIR/$OUT_FILE
 echo 'echo ""' >> $OUT_DIR/$OUT_FILE
 
 # add REQUIRES to HugeSlackBuild
@@ -261,6 +262,9 @@ if [ -e /var/cache/slackdep/$SLACKBUILDNAME.dep.lst ] ; then
   echo 'echo ""' >> $OUT_DIR/$OUT_FILE
 fi
 
+# Change date for the HugeSlackbuild to match the SOURCE_DATE_EPOCH and no need to change system date.
+touch --date @${SOURCE_DATE_EPOCH} /tmp/${SLACKBUILDNAME}*.t?z
+
 # add temporal chech md5 to file
 # MD5 md5sum /tmp/ncdu-1.17-x86_64-1_SBo.tgz
 #echo 'PACKAGE_MD5SUM=$(md5sum /tmp/'${SLACKBUILDNAME}'*.t?z)' >> ${OUT_DIR}/${OUT_FILE}
@@ -273,10 +277,11 @@ cat << 'EOF' >> ${OUT_DIR}/${OUT_FILE}
 PACKAGE_MD5SUM=$(md5sum /tmp/${SLACKBUILDNAME}*.t?z | cut -d" " -f1)
 if echo $0 | grep $PACKAGE_MD5SUM >/dev/null ; then
   echo "Reproduciblebuild  md5 will match." 
+  echo "Check output of: $0"
   md5sum /tmp/${SLACKBUILDNAME}*.t?z
-  echo $0
+  echo "If not match please report it at mantainer."
 else
-  if [[ "$(echo $0 | awk 'BEGIN { FS = "." } { print NF}')" -ge "4" ]] ; then 
+  if [[ "$(echo $0 | rev | cut -d/ -f1 | rev | awk 'BEGIN { FS = "." } { print NF}')" -ge "4" ]] ; then 
     echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
     echo "! /tmp/${SLACKBUILDNAME}*.t?z md5 NOT match!!"
     echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
@@ -284,7 +289,7 @@ else
     echo "Added md5 to HugeSlackBuild script."
     SORT_FILE=$(echo $0 | rev | cut -d. -f2- | rev)
     mv $0 ${SORT_FILE}.${PACKAGE_MD5SUM}.HugeSlackBuild
-    echo ${SORT_FILE}.${PACKAGE_MD5SUM}.HugeSlackBuild
+    echo "New file: ${SORT_FILE}.${PACKAGE_MD5SUM}.HugeSlackBuild"
   fi
 fi
 EOF
