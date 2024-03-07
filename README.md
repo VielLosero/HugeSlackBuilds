@@ -29,15 +29,15 @@ From now there are some files that I will try to explain.
 + make.HugeSlackBuild.
 + create.HugeSlackBuilds.
 + chroot.HugeSlackBuild.
-+ HugeSlackBuild scripts like ncdu.6c0388e6932afe509a7f82bc30793a9e.a85a8a6227cd127bd7151e282077aa36.HugeSlackBuild.
++ HugeSlackBuild scripts like ./ncdu.694781a44d61ee0e813d719f4598f909.3b1561b4530078e7fdbbec2b35c39df3.HugeSlackBuild.
 
-HugeSlackBuild scripts like ncdu.6c0388e6932afe509a7f82bc30793a9e.a85a8a6227cd127bd7151e282077aa36.HugeSlackBuild can be used to make a reporducible package for Slackware in this case with ncdu aplication.
+HugeSlackBuild scripts like ./ncdu.694781a44d61ee0e813d719f4598f909.3b1561b4530078e7fdbbec2b35c39df3.HugeSlackBuild can be used to make a reporducible package for Slackware in this case with ncdu aplication.
 
 
 
 ### make.HugeSlackBuild
 
-This file will made HugeSlackBuild script like ncdu.6c0388e6932afe509a7f82bc30793a9e.a85a8a6227cd127bd7151e282077aa36.HugeSlackBuild under the default directory /tmp/HugeSlackBuils/.
+This file will made HugeSlackBuild script like ./ncdu.694781a44d61ee0e813d719f4598f909.3b1561b4530078e7fdbbec2b35c39df3.HugeSlackBuild under the default directory /tmp/HugeSlackBuils/.
 Normaly executed in the source directory that have a SlackBuild script and sources that compile correctly, make.HugeSlackBuild will catch the date (SOURCE_DATE_EPOCH) the environment, and the sources files in base64 in one only file per packages source. That help us to only download one file that can be used to reproduce the sources, the environment, the date, and finaly reproduce the Slackware package byte by byte in others systems with only one file and getting the same md5, sha checksum result. See [https://reproducible-builds.org/](https://reproducible-builds.org/) for more info.
 To thust the sources when HugeSlackBuilds scripts are made, make.HugeslackBuild add some md5 sources that can be checked. And stops the execution if some file not match it md5.
 
@@ -68,7 +68,7 @@ drwxrwxrwt 16 root root    500 Mar  7 13:24 ..
 -rw-r--r--  1 root root    896 Mar  6 18:44 slack-desc
 [root@arcadia ncdu]# md5sum *
 b76268fc5f4a6152ed1f388e325ecfa8  README
-4f48db87772f0a21c7f757acd5a3ff8a  make.HugeSlackBuild
+8f799567ef6460dcfd8da13b44554994  make.HugeSlackBuild
 0a872dbda2d79e45937e22d5c97c01d4  ncdu-1.17.tar.gz
 b08f96e3e648ad0713dc2e3a4245c128  ncdu.SlackBuild
 1697e61a13fcf25a6fcabc774038203a  ncdu.info
@@ -231,9 +231,9 @@ patching file ncdu.SlackBuild
 Added md5 to HugeSlackBuild script.
 New file: ./ncdu.694781a44d61ee0e813d719f4598f909.3b1561b4530078e7fdbbec2b35c39df3.HugeSlackBuild
 ```
-The md5sum of the resulting Slackware package created are added to the HugeSlackBuild script.
+Notice that the md5sum of the resulting Slackware package are added to the HugeSlackBuild script.
 
-So if you or some that wnat to reproduce the package run again the HugeSlackBuild script, that  will made the same /tmp/ncdu-1.17-x86_64-1_SBo.tgz with the same md5sum 3b1561b4530078e7fdbbec2b35c39df3.
+So if you or some that wnat to reproduce the Slackware package ncdu-1.17-x86_64-1_SBo.tgz run again the HugeSlackBuild script, that  will made the same /tmp/ncdu-1.17-x86_64-1_SBo.tgz with the same md5sum 3b1561b4530078e7fdbbec2b35c39df3.
 
 So copy to a virtual machine an test.
 
