@@ -22,7 +22,7 @@ Maybe think about adding some warnings for required or automate of these.
 
 Maybe make the HugeSlackBuild less huge, deleting the base64 blocks but adding flavors to the build process.
 
-## Use HugeSlackBuild
+## Use of HugeSlackBuild
 
 From now there are some files that I will try to explain.
 
@@ -31,18 +31,21 @@ From now there are some files that I will try to explain.
 + chroot.HugeSlackBuild.
 + HugeSlackBuild scripts like ./ncdu.694781a44d61ee0e813d719f4598f909.3b1561b4530078e7fdbbec2b35c39df3.HugeSlackBuild.
 
-HugeSlackBuild scripts like ./ncdu.694781a44d61ee0e813d719f4598f909.3b1561b4530078e7fdbbec2b35c39df3.HugeSlackBuild can be used to make a reporducible package for Slackware in this case with ncdu aplication.
-
-
+make.HugeSlackBuild used to create HugeSlackBuild scripts from Slackware scripts that compile correctly.
+HugeSlackBuild are scripts that have all the sources to compile a Slackware reproducible package.
+create.HugerSlackBuilds script used to create all HugeSlackBuild scripts from local repositories.
+chroot.HugeSlackBuilds a chroot test environment for build HugeSlackBuild scripts, not used for now.
 
 ### make.HugeSlackBuild
 
 This file will made HugeSlackBuild script like ./ncdu.694781a44d61ee0e813d719f4598f909.3b1561b4530078e7fdbbec2b35c39df3.HugeSlackBuild under the default directory /tmp/HugeSlackBuils/.
+
 Normaly executed in the source directory that have a SlackBuild script and sources that compile correctly, make.HugeSlackBuild will catch the date (SOURCE_DATE_EPOCH) the environment, and the sources files in base64 in one only file per packages source. That help us to only download one file that can be used to reproduce the sources, the environment, the date, and finaly reproduce the Slackware package byte by byte in others systems with only one file and getting the same md5, sha checksum result. See [https://reproducible-builds.org/](https://reproducible-builds.org/) for more info.
+
 To thust the sources when HugeSlackBuilds scripts are made, make.HugeslackBuild add some md5 sources that can be checked. And stops the execution if some file not match it md5.
 
-To make a reproducible HugeSlackBuild script for example for ncdu, copy the Slackbuild tarball and sources of ncdu to a temp directory (recomended) or go on the directory with the Slackware or Slackbuilds sources u want to crate. You know.
-Then check the sources and make the HugeSlackbuild script running make.HugeSlackBuild. Easy.
+To make a reproducible HugeSlackBuild script for example for ncdu, copy the Slackbuild tarball and sources of ncdu to a temp directory (recomended), then check the sources, copy make.HugeSlackbuild file to that dir and run it. Easy.
+
 ```
 [root@arcadia ncdu]# grep ncdu /opt/slackware-repositories/slackbuilds/15.0/CHECKSUMS.md5
 120fbf59e2743bda19a8d9a85175fe3c  ./system/ncdu.tar.gz
@@ -81,16 +84,16 @@ Output compressed file: /tmp/HugeSlackBuilds/ncdu.HugeSlackBuild.tar.zst
 ```
 Congrats you have created your firts HugeSlackBuild script.
 
-For now I leaved the HugeSlackBuild script output ncdu.694781a44d61ee0e813d719f4598f909.HugeSlackBuild on /tmp/HugeSlackBuilds to can chech it whitout extract it from the compressed file. In late versions i will remove and leave only the compressed file with the HugeSlackBuild script inside.
+For now I leaved the HugeSlackBuild script output ncdu.694781a44d61ee0e813d719f4598f909.HugeSlackBuild on /tmp/HugeSlackBuilds to easy chech it whitout extract it from the compressed file. In late versions i will remove and leave only the compressed file with the HugeSlackBuild script inside.
 
 So now /tmp/HugeslackBuilds/ncdu.694781a44d61ee0e813d719f4598f909.HugeSlackBuild have all it need to make a ncdu Slackware package that othes can reproduce.
 
-You can see the SOURCE_DATE_EPOCH date. The date when that HugeSlackBuild script was created.
+You can see inside the HugeSlackBuild created script the SOURCE_DATE_EPOCH date. The date when that HugeSlackBuild script was created.
 ```
 [root@arcadia ncdu]# grep "^SOURCE_DATE_EPOCH" /tmp/HugeSlackBuilds/ncdu.694781a44d61ee0e813d719f4598f909.HugeSlackBuild | head -1
 SOURCE_DATE_EPOCH=${SOURCE_DATE_EPOCH:-1709819289}
 ```
-The md5sum of the files inside.
+You can see too the md5sum of the ncdu source files inside the HugeSlackBuild script.
 ```
 [root@arcadia ncdu]# cat /tmp/HugeSlackBuilds/ncdu.694781a44d61ee0e813d719f4598f909.HugeSlackBuild | grep echo | grep md5sum
 echo "b76268fc5f4a6152ed1f388e325ecfa8  ./README" | md5sum -c || exit 1
@@ -101,7 +104,7 @@ echo "1697e61a13fcf25a6fcabc774038203a  ./ncdu.info" | md5sum -c || exit 1
 echo "67c100dc3b10f5f103dde073b89e21d7  ./slack-desc" | md5sum -c || exit 1
 [root@arcadia ncdu]#
 ```
-Too deep. To reproduce that HugeSlackbuild script use the same SOURCE_DATE_EPOCH.
+Too deep. To reproduce that HugeSlackbuild script use the it SOURCE_DATE_EPOCH on the same ncdu source dir of course.
 ```
 [root@arcadia ncdu]# SOURCE_DATE_EPOCH=1709819289 ./make.HugeSlackBuild
 [+] Working on dir: /tmp/ncdu
@@ -109,14 +112,21 @@ Excluding ./make.HugeSlackBuild
 Huge file: ncdu.694781a44d61ee0e813d719f4598f909.HugeSlackBuild
 Output compressed file: /tmp/HugeSlackBuilds/ncdu.HugeSlackBuild.tar.zst
 ```
-If you run it whitout SOURCE_DATE_EPOCH you made a new HugeSlackBuild script with a new SOURCE_DATE_EPOCH timestamp and a new md5sum.
+So you can check that same md5 output are made for ncdu.694781a44d61ee0e813d719f4598f909.HugeSlackBuild.
+
+Then if you run it again whitout SOURCE_DATE_EPOCH you made a new HugeSlackBuild script with a new SOURCE_DATE_EPOCH timestamp and a new md5sum, which is the same as the previous one but created on another date.
 ```
 [root@arcadia ncdu]# ./make.HugeSlackBuild
 [+] Working on dir: /tmp/ncdu
-Thu Mar  7 14:28:21 CET 2024
 Excluding ./make.HugeSlackBuild
-Huge file: ncdu.34259572e376bccdde3b0eb9ac1403fc.HugeSlackBuild
+Huge file: ncdu.7bb172e3c1a588b14dd051787c5cef1e.HugeSlackBuild
 Output compressed file: /tmp/HugeSlackBuilds/ncdu.HugeSlackBuild.tar.zst
+[root@arcadia ncdu]# vi make.HugeSlackBuild
+[root@arcadia ncdu]# diff /tmp/HugeSlackBuilds/ncdu.694781a44d61ee0e813d719f4598f909.HugeSlackBuild /tmp/HugeSlackBuilds/ncdu.7bb172e3c1a588b14dd051787c5cef1e.HugeSlackBuild
+23c23
+< SOURCE_DATE_EPOCH=${SOURCE_DATE_EPOCH:-1709819289}
+---
+> SOURCE_DATE_EPOCH=${SOURCE_DATE_EPOCH:-1709896515}
 [root@arcadia ncdu]#
 ```
 
@@ -124,13 +134,15 @@ Output compressed file: /tmp/HugeSlackBuilds/ncdu.HugeSlackBuild.tar.zst
 
 HugeSlackBuild scripts are files that can be reproduced. See point above.
 
+HugeSlackBuild scripts like ./ncdu.694781a44d61ee0e813d719f4598f909.3b1561b4530078e7fdbbec2b35c39df3.HugeSlackBuild can be used to make a reporducible package for Slackware in this case for ncdu aplication.
+
 The HugeSlackBuild script have all you need to compile the sources and made a Slackare package that can be reproduced for other people with other systems, environment, time zones, etc. Whit the same architecture or cross-compiling it.
 
 WARNING: Runing HugeSlackBuild scripts will change your system date. The use of a virtual machine or containers are hight recomended, or REMEMBER update your system date after run HugeSlackBuild scripts.
 
-When you run for the firt time a HugeSlackBuild script like ncdu.4cba24a92fee3614203e0590a51e2de9.HugeSlackBuild it will compile the sources like a Slackbuild script and create a Slackware package that u can install in Slackware systems. Like a SlackBuild script do but with an extra layer that made the resulting package to be reproducible.
+When you run for the firt time a HugeSlackBuild script in that case ncdu.694781a44d61ee0e813d719f4598f909.HugeSlackBuild it will compile the sources like a Slackbuild script and create a Slackware package that u can install in Slackware systems. Like a SlackBuild script do but with an extra layer that made the resulting package to be reproducible.
 
-That pàckage reproduction are made storing and reproducing some timestamps, environment variables, and patching some Slackbuild scripts as needed. Each package can need different treatment. You can play with and help to made reproducibles all packages.
+That pàckage reproduction are made storing and reproducing some timestamps, environment variables, and patching some Slackbuild scripts as needed to do it reproducible. Each package can need different treatment. You can play with and help to made reproducibles all packages.
 
 So it is recomended run it on a temporal empty directory.
 
@@ -314,11 +326,12 @@ If not match please report it at mantainer.
 
 root@darkstar:/tmp/live#
 ```
-Have a reproducible Slackware package ncdu-1.17-x86_64-1_SBo.tgz that you can sign and share and othes can reproduce and check 3b1561b4530078e7fdbbec2b35c39df3 if u share your HugeSlackBuild too. 
+Congrats have a reproducible Slackware package ncdu-1.17-x86_64-1_SBo.tgz that you can sign and share and othes can reproduce and check 3b1561b4530078e7fdbbec2b35c39df3 if u share your HugeSlackBuild too. 
 
-Provide the sources. In base64 within HugeSlackBuild script. 
-Respect the licences. Don't modify it or patch and unpatch. Can be valided with checksum.
+From a point of view of FOSS we provide the sources. In base64 within HugeSlackBuild script. 
+We respect the licences. 
 Minimal patch to be reproducible.
+It can be easily validated.
 So now sign your ncdu source HugeSlackBuild script share and enjoy.
 
 Hope users can integrate some similar process in their SlackBuild scripts to have less layers and made it kiss. Then HugeSlackBuilds will be no necessary.
@@ -335,7 +348,9 @@ To minimize disk I/O I run it on /tmp mounted on a tmpfs.
 
 Due to github file restrictions I will upload only some little packages that I use, and all others that I can do due to size.
 
-## 
+## chroot.HugeSlackBuild
+
+This file  
 
 ## Contributing
 All contributions are welcome.
