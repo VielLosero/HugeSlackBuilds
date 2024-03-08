@@ -19,7 +19,7 @@
 #  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 #  ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-VERSION=0.0.1
+VERSION=0.0.2
 
 #cd $(dirname $0) && CWD=$(pwd)
 # make temp dir
@@ -48,7 +48,7 @@ if [ "$(ls *.SlackBuild | wc -l)" == "1" ] ; then
 # Clean MD5
 MD5=
 
-# Get source date epoch for reporducible builds
+# Set source date epoch for reporducible builds
 SOURCE_DATE_EPOCH="${SOURCE_DATE_EPOCH:-$(date +%s)}"
 # set SOURCE_DATE_EPOCH to use with patch
 #date -s "@$SOURCE_DATE_EPOCH"
@@ -76,7 +76,7 @@ fi
 #SLACKBUILDNAME=$(ls *.SlackBuild | head -1 | cut -d. -f1)
 SLACKBUILDNAME=$(ls *.SlackBuild | head -1 | sed 's/.SlackBuild//')
 
-# some packages fail and build xd
+# try to get PRINT_PACKAGE_NAME ,some packages fail and build xd
 ### Set packagename Check if we can get PRINT_PACKAGE_NAME
 ##if grep PRINT_PACKAGE_NAME ${SLACKBUILDNAME}.SlackBuild >/dev/null ; then
 ##  PACKAGE_NAME=$(PRINT_PACKAGE_NAME=y bash  ${SLACKBUILDNAME}.SlackBuild)
@@ -87,19 +87,19 @@ SLACKBUILDNAME=$(ls *.SlackBuild | head -1 | sed 's/.SlackBuild//')
 ##echo "Package name: $PACKAGE_NAME"
 
 
-# get half output file name, complete output file name are ${SLACKBUILDNAME}.${VERSION}.$MD5.HugeSlackBuild
+# get half output file name, complete output file name are ${SLACKBUILDNAME}.${PKG_VERSION}.$MD5.HugeSlackBuild
 # late when all file echoed we can get md5 and get all output file name.
-if [ -z $VERSION ] ; then 
+if [ -z $PKG_VERSION ] ; then 
   OUT_FILE=${SLACKBUILDNAME}
   # check if it is a patch
   if pwd | grep "/patches/" ; then 
     OUT_FILE=${SLACKBUILDNAME}.patch
   fi
 else
-  OUT_FILE=${SLACKBUILDNAME}.${VERSION}
+  OUT_FILE=${SLACKBUILDNAME}.${PKG_VERSION}
   # check if it is a patch
   if pwd | grep "/patches/" ; then 
-    OUT_FILE=${SLACKBUILDNAME}.patch.${VERSION}
+    OUT_FILE=${SLACKBUILDNAME}.${PKG_VERSION}.patch
   fi
 fi
 
@@ -244,7 +244,7 @@ echo "SOURCE_DATE_EPOCH=\$SOURCE_DATE_EPOCH bash $SLACKBUILDNAME.SlackBuild" >> 
 echo "" >> $OUT_DIR/$OUT_FILE
 echo "# Unpatch SlackBuild" >> $OUT_DIR/$OUT_FILE
 echo 'echo "Unpatch $(ls *.SlackBuild)."' >> $OUT_DIR/$OUT_FILE
-echo "patch -R $(ls *.SlackBuild) < ncdu.SlackBuild.reproduciblebuilds.patch || exit 1" >> $OUT_DIR/$OUT_FILE
+echo 'patch -R $(ls *.SlackBuild) < $(ls *.SlackBuild).reproduciblebuilds.patch || exit 1' >> $OUT_DIR/$OUT_FILE
 echo 'echo ""' >> $OUT_DIR/$OUT_FILE
 
 # add REQUIRES to HugeSlackBuild
@@ -262,9 +262,6 @@ if [ -e /var/cache/slackdep/$SLACKBUILDNAME.dep.lst ] ; then
   echo 'echo ""' >> $OUT_DIR/$OUT_FILE
 fi
 
-# Change date for the HugeSlackbuild to match the SOURCE_DATE_EPOCH and no need to change system date.
-touch --date @${SOURCE_DATE_EPOCH} /tmp/${SLACKBUILDNAME}*.t?z
-
 # add temporal chech md5 to file
 # MD5 md5sum /tmp/ncdu-1.17-x86_64-1_SBo.tgz
 #echo 'PACKAGE_MD5SUM=$(md5sum /tmp/'${SLACKBUILDNAME}'*.t?z)' >> ${OUT_DIR}/${OUT_FILE}
@@ -274,6 +271,7 @@ touch --date @${SOURCE_DATE_EPOCH} /tmp/${SLACKBUILDNAME}*.t?z
 echo "" >> $OUT_DIR/$OUT_FILE
 echo "# Add package MD5SUM to the HugeSlackBuild name" >> $OUT_DIR/$OUT_FILE
 cat << 'EOF' >> ${OUT_DIR}/${OUT_FILE}
+SLACKBUILDNAME=$(ls *.SlackBuild | head -1 | sed 's/.SlackBuild//')
 PACKAGE_MD5SUM=$(md5sum /tmp/${SLACKBUILDNAME}*.t?z | cut -d" " -f1)
 if echo $0 | grep $PACKAGE_MD5SUM >/dev/null ; then
   echo "Reproduciblebuild  md5 will match." 
@@ -288,7 +286,7 @@ else
   else
     echo "Added md5 to HugeSlackBuild script."
     SORT_FILE=$(echo $0 | rev | cut -d. -f2- | rev)
-    mv $0 ${SORT_FILE}.${PACKAGE_MD5SUM}.HugeSlackBuild
+    mv $(basename $0) ${SORT_FILE}.${PACKAGE_MD5SUM}.HugeSlackBuild
     echo "New file: ${SORT_FILE}.${PACKAGE_MD5SUM}.HugeSlackBuild"
   fi
 fi
