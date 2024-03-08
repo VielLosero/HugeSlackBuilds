@@ -104,7 +104,7 @@ echo "1697e61a13fcf25a6fcabc774038203a  ./ncdu.info" | md5sum -c || exit 1
 echo "67c100dc3b10f5f103dde073b89e21d7  ./slack-desc" | md5sum -c || exit 1
 [root@arcadia ncdu]#
 ```
-Too deep. To reproduce that HugeSlackbuild script use the it SOURCE_DATE_EPOCH on the same ncdu source dir of course.
+Too deep. To reproduce that HugeSlackbuild script use the SOURCE_DATE_EPOCH on the same ncdu source dir of course.
 ```
 [root@arcadia ncdu]# SOURCE_DATE_EPOCH=1709819289 ./make.HugeSlackBuild
 [+] Working on dir: /tmp/ncdu
@@ -113,6 +113,8 @@ Huge file: ncdu.694781a44d61ee0e813d719f4598f909.HugeSlackBuild
 Output compressed file: /tmp/HugeSlackBuilds/ncdu.HugeSlackBuild.tar.zst
 ```
 So you can check that same md5 output are made for ncdu.694781a44d61ee0e813d719f4598f909.HugeSlackBuild.
+
+NOTE: Need same make.HugeSlackBuild version to obtain same md5.
 
 Then if you run it again whitout SOURCE_DATE_EPOCH you made a new HugeSlackBuild script with a new SOURCE_DATE_EPOCH timestamp and a new md5sum, which is the same as the previous one but created on another date.
 ```
@@ -350,7 +352,7 @@ Due to github file restrictions I will upload only some little packages that I u
 
 ## chroot.HugeSlackBuild
 
-This file  
+To do.
 
 ## Contributing
 All contributions are welcome.

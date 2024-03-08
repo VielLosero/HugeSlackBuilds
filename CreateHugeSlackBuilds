@@ -48,7 +48,7 @@ for slackbuild_line in $(grep ".*\.SlackBuild$" ${REPO_SLACKWARE_SOURCE}/CHECKSU
   cd ${REPO_SLACKWARE_SOURCE}/$slackbuild_path || exit 1
 [[ "$VERBOSE" -eq "1" ]] && \
   echo -n "cd " &&  pwd
-  bash ${CWD}/make.HugeSlackBuild
+  bash ${CWD}/MakeHugeSlackBuild-0.0.3
 done
 
 
